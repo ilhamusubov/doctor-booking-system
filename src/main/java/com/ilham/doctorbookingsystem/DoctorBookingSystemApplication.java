@@ -1,4 +1,4 @@
-package com.example.doctorbookingsystem;
+package com.ilham.doctorbookingsystem;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

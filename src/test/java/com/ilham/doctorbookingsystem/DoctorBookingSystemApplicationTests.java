@@ -1,4 +1,4 @@
-package com.example.doctorbookingsystem;
+package com.ilham.doctorbookingsystem;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
