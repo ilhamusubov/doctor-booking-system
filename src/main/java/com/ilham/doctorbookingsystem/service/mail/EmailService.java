@@ -1,4 +1,4 @@
-package com.ilham.doctorbookingsystem.service;
+package com.ilham.doctorbookingsystem.service.mail;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;

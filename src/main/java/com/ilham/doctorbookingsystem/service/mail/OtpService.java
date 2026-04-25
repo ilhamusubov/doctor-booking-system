@@ -1,4 +1,4 @@
-package com.ilham.doctorbookingsystem.service;
+package com.ilham.doctorbookingsystem.service.mail;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
