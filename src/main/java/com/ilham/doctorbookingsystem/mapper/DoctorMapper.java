@@ -12,4 +12,6 @@ public interface DoctorMapper {
     DoctorResponseDto entityToResponse(DoctorEntity doctorEntity);
 
     UserResponseDto entityToResponse(UserEntity userEntity);
+
+
 }
