@@ -4,6 +4,7 @@ import com.ilham.doctorbookingsystem.entity.AppointmentEntity;
 import com.ilham.doctorbookingsystem.entity.DoctorEntity;
 import com.ilham.doctorbookingsystem.entity.PatientEntity;
 import com.ilham.doctorbookingsystem.entity.UserEntity;
+import com.ilham.doctorbookingsystem.enums.AppointmentStatus;
 import com.ilham.doctorbookingsystem.enums.ApprovalStatus;
 import com.ilham.doctorbookingsystem.mapper.AppointmentMapper;
 import com.ilham.doctorbookingsystem.mapper.DoctorMapper;
@@ -18,10 +19,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -103,5 +106,61 @@ public class DoctorService {
 
         log.info("ActionLog.getAllMyAppointments.end");
         return appointmentEntities.map(appointmentMapper::entityToForDto);
+    }
+
+
+    @Transactional
+    public AppointmentForDoctorResponseDto confirmAppointmentByDoctor(Long id, HttpServletRequest request) {
+        log.info("ActionLog.confirmAppointment.start");
+        UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(request))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        DoctorEntity doctorEntity = doctorRepository.findByUserId(userEntity.getId())
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        AppointmentEntity appointmentEntity = appointmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        if (!appointmentEntity.getDoctor().getId().equals(doctorEntity.getId())) {
+            throw new RuntimeException("You cannot confirm this appointment");
+        }
+
+        if (appointmentEntity.getStatus() == AppointmentStatus.PENDING){
+            appointmentEntity.setStatus(AppointmentStatus.CONFIRMED);
+            appointmentEntity.setUpdatedAt(LocalDateTime.now());
+        }else{
+            throw new RuntimeException("You cannot confirm this appointment");
+        }
+        appointmentRepository.save(appointmentEntity);
+        log.info("ActionLog.confirmAppointment.end");
+        return appointmentMapper.entityToForDto(appointmentEntity);
+    }
+
+
+    @Transactional
+    public AppointmentForDoctorResponseDto cancelAppointmentByDoctor(Long id, HttpServletRequest request) {
+        log.info("ActionLog.rejectAppointment.start");
+        UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(request))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        DoctorEntity doctorEntity = doctorRepository.findByUserId(userEntity.getId())
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        AppointmentEntity appointmentEntity = appointmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        if (!appointmentEntity.getDoctor().getId().equals(doctorEntity.getId())) {
+            throw new RuntimeException("You cannot cancel this appointment");
+        }
+
+        if (appointmentEntity.getStatus() == AppointmentStatus.PENDING || appointmentEntity.getStatus() == AppointmentStatus.CONFIRMED){
+            appointmentEntity.setStatus(AppointmentStatus.CANCELLED);
+            appointmentEntity.setUpdatedAt(LocalDateTime.now());
+        }else{
+            throw new RuntimeException("Only pending or confirmed appointments can be cancelled");
+        }
+        appointmentRepository.save(appointmentEntity);
+        log.info("ActionLog.rejectAppointment.end");
+        return appointmentMapper.entityToForDto(appointmentEntity);
     }
 }

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,5 +21,15 @@ public class DoctorController {
     @GetMapping("/get-all-my-appointments")
     public Page<AppointmentForDoctorResponseDto> getAllMyAppointments(HttpServletRequest request, Pageable pageable){
         return doctorService.getAllMyAppointments(request, pageable);
+    }
+
+    @PutMapping("/confirm-appointment")
+    public AppointmentForDoctorResponseDto confirmAppointmentByDoctor(Long id, HttpServletRequest request){
+        return doctorService.confirmAppointmentByDoctor(id, request);
+    }
+
+    @PutMapping("/cancel-appointment")
+    public AppointmentForDoctorResponseDto cancelAppointmentByDoctor(Long id, HttpServletRequest request){
+        return doctorService.cancelAppointmentByDoctor(id, request);
     }
 }
