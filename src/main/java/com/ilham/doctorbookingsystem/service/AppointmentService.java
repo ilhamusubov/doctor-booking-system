@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -45,6 +46,14 @@ public class AppointmentService {
     @Transactional
     public AppointmentResponseDto bookAppointment(BookAppointmentRequestDto request, HttpServletRequest httpRequest){
         log.info("actionLog.bookAppointment.start");
+
+        LocalDate today = LocalDate.now();
+        LocalDate maxDate = today.plusDays(30);
+
+        if (request.getAppointmentDate().isBefore(today) || request.getAppointmentDate().isAfter(maxDate)) {
+            throw new RuntimeException("Date must be within next 30 days");
+        }
+
         UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(httpRequest))
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
 

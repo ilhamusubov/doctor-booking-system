@@ -12,6 +12,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
 
 @RestController
 @RequestMapping("api/v1/patient")
@@ -47,4 +51,8 @@ public class PatientController {
         return patientService.searchDoctorBySpecialization(specialization, pageable);
     }
 
+    @GetMapping("/get-available-slots/{doctorId}")
+    public List<LocalTime> getAvailableSlots(@PathVariable Long doctorId, @RequestParam LocalDate date){
+        return patientService.getAvailableSlots(doctorId, date);
+    }
 }
