@@ -42,4 +42,9 @@ public class PatientController {
         return patientService.getAllApprovedDoctors(pageable);
     }
 
+    @GetMapping("/get-doctor-by-specialization")
+    public Page<DoctorResponseDto> searchDoctorBySpecialization(@RequestParam String specialization, Pageable pageable){
+        return patientService.searchDoctorBySpecialization(specialization, pageable);
+    }
+
 }

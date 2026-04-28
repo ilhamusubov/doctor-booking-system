@@ -30,4 +30,27 @@ public class PatientService {
         log.info("actionLog.getAllApprovedDoctors.end");
         return doctorResponseDtos;
     }
+
+
+    public Page<DoctorResponseDto> searchDoctorBySpecialization(String specialization, Pageable pageable) {
+        log.info("ActionLog.searchApprovedDoctors.start");
+
+        Page<DoctorEntity> doctorEntities;
+
+        if (specialization == null || specialization.isBlank()) {
+            doctorEntities = doctorRepository.findAllByStatus(ApprovalStatus.APPROVED, pageable);
+        } else {
+            doctorEntities = doctorRepository.findByStatusAndSpecializationContainingIgnoreCase(
+                    ApprovalStatus.APPROVED,
+                    specialization,
+                    pageable
+            );
+        }
+
+        Page<DoctorResponseDto> doctorResponseDtos =
+                doctorEntities.map(doctorMapper::entityToResponse);
+
+        log.info("ActionLog.searchApprovedDoctors.end");
+        return doctorResponseDtos;
+    }
 }
