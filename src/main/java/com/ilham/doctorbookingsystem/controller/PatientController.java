@@ -2,7 +2,10 @@ package com.ilham.doctorbookingsystem.controller;
 
 import com.ilham.doctorbookingsystem.model.request.BookAppointmentRequestDto;
 import com.ilham.doctorbookingsystem.model.response.AppointmentResponseDto;
+import com.ilham.doctorbookingsystem.model.response.DoctorResponseDto;
 import com.ilham.doctorbookingsystem.service.AppointmentService;
+import com.ilham.doctorbookingsystem.service.DoctorService;
+import com.ilham.doctorbookingsystem.service.PatientService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,6 +20,8 @@ public class PatientController {
 
     private final AppointmentService appointmentService;
 
+    private final PatientService patientService;
+
     @PostMapping("/book-appointment")
     public AppointmentResponseDto bookAppointment(@RequestBody BookAppointmentRequestDto request, HttpServletRequest httpRequest){
         return appointmentService.bookAppointment(request,httpRequest);
@@ -30,6 +35,11 @@ public class PatientController {
     @PutMapping("/cancel-appointment/{id}")
     public AppointmentResponseDto cancelAppointment(@PathVariable Long id, HttpServletRequest httpRequest){
         return appointmentService.cancelAppointment(id, httpRequest);
+    }
+
+    @GetMapping("/get-all-approved-doctors")
+    public Page<DoctorResponseDto> getAllApprovedDoctors(Pageable pageable){
+        return patientService.getAllApprovedDoctors(pageable);
     }
 
 }

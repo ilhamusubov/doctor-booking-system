@@ -1,6 +1,5 @@
 package com.ilham.doctorbookingsystem.model.response;
 
-import com.ilham.doctorbookingsystem.entity.UserEntity;
 import com.ilham.doctorbookingsystem.enums.ApprovalStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

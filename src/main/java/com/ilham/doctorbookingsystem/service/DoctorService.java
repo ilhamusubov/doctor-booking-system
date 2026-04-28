@@ -2,7 +2,6 @@ package com.ilham.doctorbookingsystem.service;
 
 import com.ilham.doctorbookingsystem.entity.AppointmentEntity;
 import com.ilham.doctorbookingsystem.entity.DoctorEntity;
-import com.ilham.doctorbookingsystem.entity.PatientEntity;
 import com.ilham.doctorbookingsystem.entity.UserEntity;
 import com.ilham.doctorbookingsystem.enums.AppointmentStatus;
 import com.ilham.doctorbookingsystem.enums.ApprovalStatus;
@@ -19,7 +18,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -69,14 +67,16 @@ public class DoctorService {
         return doctorMapper.entityToResponse(doctor);
     }
 
-    public List<DoctorResponseDto> getAllPendingDoctors() {
+    public Page<DoctorResponseDto> getAllPendingDoctors(Pageable pageable) {
         log.info("ActionLog.getPendingDoctors.start");
-        List<DoctorEntity> doctorEntities = doctorRepository.findAllByStatus(ApprovalStatus.PENDING);
-        List<DoctorResponseDto> doctorResponseDtos = new ArrayList<>();
-        for (DoctorEntity doctorEntity : doctorEntities) {
-                doctorResponseDtos.add(doctorMapper.entityToResponse(doctorEntity));
-        }
+
+        Page<DoctorEntity> doctorEntities =
+                doctorRepository.findAllByStatus(ApprovalStatus.PENDING, pageable);
+
+        Page<DoctorResponseDto> doctorResponseDtos = doctorEntities.map(doctorMapper::entityToResponse);
+
         log.info("ActionLog.getPendingDoctors.end");
+
         return doctorResponseDtos;
     }
 

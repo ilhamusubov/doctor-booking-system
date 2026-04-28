@@ -3,9 +3,10 @@ package com.ilham.doctorbookingsystem.controller;
 import com.ilham.doctorbookingsystem.model.response.DoctorResponseDto;
 import com.ilham.doctorbookingsystem.service.DoctorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -15,8 +16,8 @@ public class AdminController {
     private final DoctorService doctorService;
 
     @GetMapping("/all/pending/doctors")
-    public List<DoctorResponseDto> getAllPendingDoctors(){
-        return doctorService.getAllPendingDoctors();
+    public Page<DoctorResponseDto> getAllPendingDoctors(Pageable pageable){
+        return doctorService.getAllPendingDoctors(pageable);
     }
 
     @PutMapping("/approve/doctor/{id}")
