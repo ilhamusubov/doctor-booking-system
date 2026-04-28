@@ -32,4 +32,9 @@ public class DoctorController {
     public AppointmentForDoctorResponseDto cancelAppointmentByDoctor(Long id, HttpServletRequest request){
         return doctorService.cancelAppointmentByDoctor(id, request);
     }
+
+    @PutMapping("/complete-appointment")
+    public AppointmentForDoctorResponseDto completeAppointmentByDoctor(Long id, HttpServletRequest request){
+        return doctorService.completeAppointmentByDoctor(id, request);
+    }
 }

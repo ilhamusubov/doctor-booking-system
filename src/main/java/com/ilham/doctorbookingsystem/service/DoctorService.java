@@ -111,7 +111,7 @@ public class DoctorService {
 
     @Transactional
     public AppointmentForDoctorResponseDto confirmAppointmentByDoctor(Long id, HttpServletRequest request) {
-        log.info("ActionLog.confirmAppointment.start");
+        log.info("ActionLog.confirmAppointmentByDoctor.start");
         UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(request))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -132,14 +132,14 @@ public class DoctorService {
             throw new RuntimeException("You cannot confirm this appointment");
         }
         appointmentRepository.save(appointmentEntity);
-        log.info("ActionLog.confirmAppointment.end");
+        log.info("ActionLog.confirmAppointmentByDoctor.end");
         return appointmentMapper.entityToForDto(appointmentEntity);
     }
 
 
     @Transactional
     public AppointmentForDoctorResponseDto cancelAppointmentByDoctor(Long id, HttpServletRequest request) {
-        log.info("ActionLog.rejectAppointment.start");
+        log.info("ActionLog.cancelAppointmentByDoctor.start");
         UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(request))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -160,7 +160,35 @@ public class DoctorService {
             throw new RuntimeException("Only pending or confirmed appointments can be cancelled");
         }
         appointmentRepository.save(appointmentEntity);
-        log.info("ActionLog.rejectAppointment.end");
+        log.info("ActionLog.cancelAppointmentByDoctor.end");
+        return appointmentMapper.entityToForDto(appointmentEntity);
+    }
+
+
+    @Transactional
+    public AppointmentForDoctorResponseDto completeAppointmentByDoctor(Long id, HttpServletRequest request) {
+        log.info("ActionLog.completeAppointmentByDoctor.start");
+        UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(request))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        DoctorEntity doctorEntity = doctorRepository.findByUserId(userEntity.getId())
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        AppointmentEntity appointmentEntity = appointmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        if (!appointmentEntity.getDoctor().getId().equals(doctorEntity.getId())) {
+            throw new RuntimeException("You cannot complete this appointment");
+        }
+
+        if (appointmentEntity.getStatus() == AppointmentStatus.CONFIRMED){
+            appointmentEntity.setStatus(AppointmentStatus.COMPLETED);
+            appointmentEntity.setUpdatedAt(LocalDateTime.now());
+        }else{
+            throw new RuntimeException("You can complete only confirmed appointments");
+        }
+        appointmentRepository.save(appointmentEntity);
+        log.info("ActionLog.completeAppointmentByDoctor.end");
         return appointmentMapper.entityToForDto(appointmentEntity);
     }
 }
