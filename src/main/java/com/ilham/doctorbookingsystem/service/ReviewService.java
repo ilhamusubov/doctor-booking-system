@@ -4,15 +4,20 @@ import com.ilham.doctorbookingsystem.entity.*;
 import com.ilham.doctorbookingsystem.enums.AppointmentStatus;
 import com.ilham.doctorbookingsystem.mapper.ReviewMapper;
 import com.ilham.doctorbookingsystem.model.request.CreateReviewRequestDto;
+import com.ilham.doctorbookingsystem.model.response.DoctorReviewResponseDto;
 import com.ilham.doctorbookingsystem.model.response.ReviewResponseDto;
 import com.ilham.doctorbookingsystem.repository.*;
 import com.ilham.doctorbookingsystem.service.auth.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -31,6 +36,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
 
     private final ReviewMapper reviewMapper;
+    private final DoctorRepository doctorRepository;
 
     public ReviewResponseDto createReview(CreateReviewRequestDto request, HttpServletRequest httpRequest){
         log.info("ActionLog.createReview.start");
@@ -69,5 +75,21 @@ public class ReviewService {
 
         log.info("ActionLog.createReview.end");
         return reviewMapper.entityToDto(reviewEntity);
+    }
+
+
+    public Page<DoctorReviewResponseDto> getMyReviews(Pageable pageable, HttpServletRequest httpRequest){
+        log.info("ActionLog.getAllReviews.start");
+
+        UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(httpRequest))
+                .orElseThrow(() -> new RuntimeException("User Not Found"));
+
+        DoctorEntity doctorEntity = doctorRepository.findByUserId(userEntity.getId())
+                .orElseThrow(() -> new RuntimeException("Doctor Not Found"));
+
+        Page<ReviewEntity> reviewEntities = reviewRepository.findByDoctorId(doctorEntity.getId(), pageable);
+
+        log.info("ActionLog.getAllReviews.end");
+        return reviewEntities.map(reviewMapper::entityToForDto);
     }
 }

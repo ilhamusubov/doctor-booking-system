@@ -1,15 +1,15 @@
 package com.ilham.doctorbookingsystem.controller;
 
 import com.ilham.doctorbookingsystem.model.request.CreateReviewRequestDto;
+import com.ilham.doctorbookingsystem.model.response.DoctorReviewResponseDto;
 import com.ilham.doctorbookingsystem.model.response.ReviewResponseDto;
 import com.ilham.doctorbookingsystem.service.ReviewService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v1/review")
@@ -21,5 +21,10 @@ public class ReviewController {
     @PostMapping("/create-review")
     public ReviewResponseDto createReview(@RequestBody @Valid CreateReviewRequestDto requestDto, HttpServletRequest httpRequest){
         return reviewService.createReview(requestDto, httpRequest);
+    }
+
+    @GetMapping("/get-my-reviews")
+    public Page<DoctorReviewResponseDto> getMyReviews(Pageable pageable, HttpServletRequest httpRequest){
+        return reviewService.getMyReviews(pageable, httpRequest);
     }
 }
