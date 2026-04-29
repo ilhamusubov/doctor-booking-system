@@ -14,6 +14,7 @@ import com.ilham.doctorbookingsystem.repository.DoctorRepository;
 import com.ilham.doctorbookingsystem.repository.PatientRepository;
 import com.ilham.doctorbookingsystem.repository.UserRepository;
 import com.ilham.doctorbookingsystem.service.auth.JwtService;
+import com.ilham.doctorbookingsystem.service.mail.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,8 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
 
     private final AppointmentMapper appointmentMapper;
+
+    private final EmailService emailService;
 
     @Transactional
     public AppointmentResponseDto bookAppointment(BookAppointmentRequestDto request, HttpServletRequest httpRequest){
@@ -82,11 +85,19 @@ public class AppointmentService {
                 .notes(request.getNotes())
                 .status(AppointmentStatus.PENDING)
                 .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .patient(patientEntity)
                 .doctor(doctorEntity)
                 .build();
 
         appointmentRepository.save(appointmentEntity);
+
+        emailService.sendAppointmentCreatedEmail(
+                userEntity.getEmail(),
+                doctorEntity.getUser().getFirstName() + " " + doctorEntity.getUser().getLastName(),
+                appointmentEntity.getAppointmentDate(),
+                appointmentEntity.getAppointmentTime()
+        );
 
         log.info("actionLog.bookAppointment.end");
         return appointmentMapper.entityToDto(appointmentEntity);
