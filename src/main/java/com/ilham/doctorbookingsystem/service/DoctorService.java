@@ -14,6 +14,7 @@ import com.ilham.doctorbookingsystem.repository.DoctorRepository;
 import com.ilham.doctorbookingsystem.repository.PatientRepository;
 import com.ilham.doctorbookingsystem.repository.UserRepository;
 import com.ilham.doctorbookingsystem.service.auth.JwtService;
+import com.ilham.doctorbookingsystem.service.mail.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,7 @@ public class DoctorService {
 
     private final AppointmentMapper appointmentMapper;
 
-    private final PatientRepository patientRepository;
+    private final EmailService emailService;
 
     private DoctorEntity getDoctorById(Long id) {
         return doctorRepository.findById(id).
@@ -132,6 +133,14 @@ public class DoctorService {
             throw new RuntimeException("You cannot confirm this appointment");
         }
         appointmentRepository.save(appointmentEntity);
+
+        emailService.sendAppointmentConfirmedEmail(
+                appointmentEntity.getPatient().getUser().getEmail(),
+                doctorEntity.getUser().getFirstName() + " " + doctorEntity.getUser().getLastName(),
+                appointmentEntity.getAppointmentDate(),
+                appointmentEntity.getAppointmentTime()
+        );
+
         log.info("ActionLog.confirmAppointmentByDoctor.end");
         return appointmentMapper.entityToForDto(appointmentEntity);
     }
@@ -160,6 +169,14 @@ public class DoctorService {
             throw new RuntimeException("Only pending or confirmed appointments can be cancelled");
         }
         appointmentRepository.save(appointmentEntity);
+
+        emailService.sendAppointmentCanceledEmail(
+                appointmentEntity.getPatient().getUser().getEmail(),
+                doctorEntity.getUser().getFirstName() + " " + doctorEntity.getUser().getLastName(),
+                appointmentEntity.getAppointmentDate(),
+                appointmentEntity.getAppointmentTime()
+        );
+
         log.info("ActionLog.cancelAppointmentByDoctor.end");
         return appointmentMapper.entityToForDto(appointmentEntity);
     }

@@ -39,4 +39,34 @@ public class EmailService {
         );
         mailSender.send(message);
     }
+
+    public void sendAppointmentConfirmedEmail(String to, String doctorName, LocalDate date, LocalTime time) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Appointment Confirmed");
+        message.setText(
+                "Your appointment has been confirmed successfully.\n\n" +
+                        "Doctor: " + doctorName + "\n" +
+                        "Date: " + date + "\n" +
+                        "Time: " + time + "\n" +
+                        "Status: CONFIRMED"
+        );
+        mailSender.send(message);
+    }
+
+    public void sendAppointmentCanceledEmail(String to, String doctorName, LocalDate date, LocalTime time) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Appointment Cancelled");
+        message.setText(
+                "Your appointment has been Cancelled successfully.\n\n" +
+                        "Doctor: " + doctorName + "\n" +
+                        "Date: " + date + "\n" +
+                        "Time: " + time + "\n" +
+                        "Status: CANCELLED"
+        );
+        mailSender.send(message);
+    }
 }
