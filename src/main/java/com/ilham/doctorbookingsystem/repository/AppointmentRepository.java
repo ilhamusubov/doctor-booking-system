@@ -2,7 +2,6 @@ package com.ilham.doctorbookingsystem.repository;
 
 import com.ilham.doctorbookingsystem.entity.AppointmentEntity;
 import com.ilham.doctorbookingsystem.enums.AppointmentStatus;
-import com.ilham.doctorbookingsystem.enums.ApprovalStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

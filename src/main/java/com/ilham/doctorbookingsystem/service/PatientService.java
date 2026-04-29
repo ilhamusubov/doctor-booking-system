@@ -30,13 +30,13 @@ public class PatientService {
     private final AppointmentRepository appointmentRepository;
 
     public Page<DoctorResponseDto> getAllApprovedDoctors(Pageable pageable) {
-        log.info("actionLog.getAllApprovedDoctors.start");
+        log.info("ActionLog.getAllApprovedDoctors.start");
 
         Page<DoctorEntity> doctorEntities = doctorRepository.findAllByStatus(ApprovalStatus.APPROVED, pageable);
 
         Page<DoctorResponseDto> doctorResponseDtos = doctorEntities.map(doctorMapper::entityToResponse);
 
-        log.info("actionLog.getAllApprovedDoctors.end");
+        log.info("ActionLog.getAllApprovedDoctors.end");
         return doctorResponseDtos;
     }
 

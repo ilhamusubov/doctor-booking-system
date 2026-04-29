@@ -4,7 +4,6 @@ import com.ilham.doctorbookingsystem.model.request.BookAppointmentRequestDto;
 import com.ilham.doctorbookingsystem.model.response.AppointmentResponseDto;
 import com.ilham.doctorbookingsystem.model.response.DoctorResponseDto;
 import com.ilham.doctorbookingsystem.service.AppointmentService;
-import com.ilham.doctorbookingsystem.service.DoctorService;
 import com.ilham.doctorbookingsystem.service.PatientService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
