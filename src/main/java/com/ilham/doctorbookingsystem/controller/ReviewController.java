@@ -1,6 +1,7 @@
 package com.ilham.doctorbookingsystem.controller;
 
 import com.ilham.doctorbookingsystem.model.request.CreateReviewRequestDto;
+import com.ilham.doctorbookingsystem.model.response.AverageReviewResponseDto;
 import com.ilham.doctorbookingsystem.model.response.DoctorReviewResponseDto;
 import com.ilham.doctorbookingsystem.model.response.ReviewResponseDto;
 import com.ilham.doctorbookingsystem.service.ReviewService;
@@ -26,5 +27,10 @@ public class ReviewController {
     @GetMapping("/get-my-reviews")
     public Page<DoctorReviewResponseDto> getMyReviews(Pageable pageable, HttpServletRequest httpRequest){
         return reviewService.getMyReviews(pageable, httpRequest);
+    }
+
+    @GetMapping("/get-doctor-average-rating/{doctorId}")
+    public AverageReviewResponseDto getDoctorAverageRating(@PathVariable Long doctorId){
+        return reviewService.getDoctorAverageRating(doctorId);
     }
 }

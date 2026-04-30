@@ -4,6 +4,7 @@ import com.ilham.doctorbookingsystem.entity.*;
 import com.ilham.doctorbookingsystem.enums.AppointmentStatus;
 import com.ilham.doctorbookingsystem.mapper.ReviewMapper;
 import com.ilham.doctorbookingsystem.model.request.CreateReviewRequestDto;
+import com.ilham.doctorbookingsystem.model.response.AverageReviewResponseDto;
 import com.ilham.doctorbookingsystem.model.response.DoctorReviewResponseDto;
 import com.ilham.doctorbookingsystem.model.response.ReviewResponseDto;
 import com.ilham.doctorbookingsystem.repository.*;
@@ -92,4 +93,29 @@ public class ReviewService {
         log.info("ActionLog.getAllReviews.end");
         return reviewEntities.map(reviewMapper::entityToForDto);
     }
+
+
+    public AverageReviewResponseDto getDoctorAverageRating(Long doctorId){
+        log.info("ActionLog.averageReview.start");
+
+        doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor Not Found"));
+
+        long totalReviews = reviewRepository.countByDoctorId(doctorId);
+        Double averageRating = reviewRepository.findAverageRatingByDoctorId(doctorId);
+
+        if (averageRating == null){
+            averageRating = 0.0;
+        }
+
+        averageRating = Math.round(averageRating * 10.0) / 10.0;
+
+        AverageReviewResponseDto response = new AverageReviewResponseDto();
+        response.setTotalReviews(totalReviews);
+        response.setAverageRating(averageRating);
+
+        log.info("ActionLog.averageReview.end");
+        return response;
+    }
+
 }
