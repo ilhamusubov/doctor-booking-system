@@ -6,6 +6,7 @@ import com.ilham.doctorbookingsystem.model.request.RegisterPatientRequest;
 import com.ilham.doctorbookingsystem.model.request.VerifyOtpRequestDto;
 import com.ilham.doctorbookingsystem.model.response.AuthResponse;
 import com.ilham.doctorbookingsystem.service.auth.AuthenticationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,22 +18,22 @@ public class AuthController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/register/patient")
-    public String registerPatient(@RequestBody RegisterPatientRequest request) {
+    public String registerPatient(@RequestBody @Valid RegisterPatientRequest request) {
         return authenticationService.registerPatient(request);
     }
 
     @PostMapping("/register/doctor")
-    public String registerDoctor(@RequestBody RegisterDoctorRequest request) {
+    public String registerDoctor(@RequestBody @Valid RegisterDoctorRequest request) {
         return authenticationService.registerDoctor(request);
     }
 
     @PostMapping("/verify-otp")
-    public AuthResponse verifyOtp(@RequestBody VerifyOtpRequestDto request) {
+    public AuthResponse verifyOtp(@RequestBody @Valid VerifyOtpRequestDto request) {
         return authenticationService.verifyOtp(request);
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody LoginRequest request) {
+    public AuthResponse login(@RequestBody @Valid LoginRequest request) {
         return authenticationService.login(request);
     }
 

@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class RegisterPatientRequest {
 
-    @NotBlank
+    @NotBlank(message = "ad yazilmalidi")
     private String firstName;
 
     @NotBlank
