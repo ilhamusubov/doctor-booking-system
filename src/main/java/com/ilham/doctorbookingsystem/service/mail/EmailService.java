@@ -1,18 +1,20 @@
 package com.ilham.doctorbookingsystem.service.mail;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final Optional<JavaMailSender> mailSender;
 
     public void sendOtpEmail(String to, String otp) {
 
@@ -21,7 +23,7 @@ public class EmailService {
         message.setSubject("OTP Verification Code");
         message.setText("Your OTP code is: " + otp + "\nThis code is valid for 5 minutes.");
 
-        mailSender.send(message);
+        mailSender.get().send(message);
     }
 
     public void sendAppointmentCreatedEmail(String to, String doctorName, LocalDate date, LocalTime time) {
@@ -37,7 +39,7 @@ public class EmailService {
                         "Time: " + time + "\n" +
                         "Status: PENDING"
         );
-        mailSender.send(message);
+        mailSender.get().send(message);
     }
 
     public void sendAppointmentConfirmedEmail(String to, String doctorName, LocalDate date, LocalTime time) {
@@ -52,7 +54,7 @@ public class EmailService {
                         "Time: " + time + "\n" +
                         "Status: CONFIRMED"
         );
-        mailSender.send(message);
+        mailSender.get().send(message);
     }
 
     public void sendAppointmentCanceledEmail(String to, String doctorName, LocalDate date, LocalTime time) {
@@ -67,6 +69,6 @@ public class EmailService {
                         "Time: " + time + "\n" +
                         "Status: CANCELLED"
         );
-        mailSender.send(message);
+        mailSender.get().send(message);
     }
 }

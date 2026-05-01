@@ -109,6 +109,7 @@ public class AppointmentService {
 
     public Page<AppointmentResponseDto> getMyAppointments(HttpServletRequest httpRequest, Pageable pageable){
         log.info("actionLog.getMyAppointments.start");
+
         UserEntity user = userRepository.findById(jwtService.extractUserIdFromAccessToken(httpRequest))
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 

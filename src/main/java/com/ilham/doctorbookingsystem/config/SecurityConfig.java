@@ -1,5 +1,6 @@
 package com.ilham.doctorbookingsystem.config;
 
+import com.ilham.doctorbookingsystem.exception.CustomAccessDeniedHandler;
 import com.ilham.doctorbookingsystem.exception.CustomAuthenticationEntryPoint;
 import com.ilham.doctorbookingsystem.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthenticationProvider authenticationProvider;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
 
     @Bean
@@ -39,8 +41,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                .exceptionHandling(ex ->
-                        ex.authenticationEntryPoint(customAuthenticationEntryPoint)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
                 )
 
                 .sessionManagement(session ->
