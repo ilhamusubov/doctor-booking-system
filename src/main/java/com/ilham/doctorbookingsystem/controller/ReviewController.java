@@ -2,6 +2,7 @@ package com.ilham.doctorbookingsystem.controller;
 
 import com.ilham.doctorbookingsystem.model.request.CreateReviewRequestDto;
 import com.ilham.doctorbookingsystem.model.response.AverageReviewResponseDto;
+import com.ilham.doctorbookingsystem.model.response.DoctorDetailResponseDto;
 import com.ilham.doctorbookingsystem.model.response.DoctorReviewResponseDto;
 import com.ilham.doctorbookingsystem.model.response.ReviewResponseDto;
 import com.ilham.doctorbookingsystem.service.ReviewService;
@@ -32,5 +33,10 @@ public class ReviewController {
     @GetMapping("/get-doctor-average-rating/{doctorId}")
     public AverageReviewResponseDto getDoctorAverageRating(@PathVariable Long doctorId){
         return reviewService.getDoctorAverageRating(doctorId);
+    }
+
+    @GetMapping("/get-doctor-detail/{doctorId}")
+    public DoctorDetailResponseDto getDoctorDetail(@PathVariable Long doctorId){
+        return reviewService.getDoctorDetail(doctorId);
     }
 }

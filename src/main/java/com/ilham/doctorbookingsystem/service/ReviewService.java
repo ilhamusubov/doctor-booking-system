@@ -5,6 +5,7 @@ import com.ilham.doctorbookingsystem.enums.AppointmentStatus;
 import com.ilham.doctorbookingsystem.mapper.ReviewMapper;
 import com.ilham.doctorbookingsystem.model.request.CreateReviewRequestDto;
 import com.ilham.doctorbookingsystem.model.response.AverageReviewResponseDto;
+import com.ilham.doctorbookingsystem.model.response.DoctorDetailResponseDto;
 import com.ilham.doctorbookingsystem.model.response.DoctorReviewResponseDto;
 import com.ilham.doctorbookingsystem.model.response.ReviewResponseDto;
 import com.ilham.doctorbookingsystem.repository.*;
@@ -115,6 +116,25 @@ public class ReviewService {
         response.setAverageRating(averageRating);
 
         log.info("ActionLog.averageReview.end");
+        return response;
+    }
+
+    public DoctorDetailResponseDto getDoctorDetail(Long doctorId){
+        log.info("ActionLog.getDoctorDetail.start");
+        DoctorEntity doctorEntity = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor Not Found"));
+
+        AverageReviewResponseDto ratingInfo = getDoctorAverageRating(doctorId);
+
+        DoctorDetailResponseDto response = new DoctorDetailResponseDto();
+        response.setId(doctorEntity.getId());
+        response.setFirstName(doctorEntity.getUser().getFirstName());
+        response.setLastName(doctorEntity.getUser().getLastName());
+        response.setSpecialization(doctorEntity.getSpecialization());
+        response.setTotalReviews(ratingInfo.getTotalReviews());
+        response.setAverageRating(ratingInfo.getAverageRating());
+
+        log.info("ActionLog.getDoctorDetail.end");
         return response;
     }
 
