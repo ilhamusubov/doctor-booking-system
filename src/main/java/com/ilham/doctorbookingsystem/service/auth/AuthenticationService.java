@@ -5,7 +5,10 @@ import com.ilham.doctorbookingsystem.entity.PatientEntity;
 import com.ilham.doctorbookingsystem.entity.RefreshTokenEntity;
 import com.ilham.doctorbookingsystem.entity.UserEntity;
 import com.ilham.doctorbookingsystem.enums.ApprovalStatus;
+import com.ilham.doctorbookingsystem.enums.ErrorMessage;
 import com.ilham.doctorbookingsystem.enums.RoleEnum;
+import com.ilham.doctorbookingsystem.exception.CustomException;
+import com.ilham.doctorbookingsystem.exception.ResourceNotFoundException;
 import com.ilham.doctorbookingsystem.model.request.LoginRequest;
 import com.ilham.doctorbookingsystem.model.request.RegisterDoctorRequest;
 import com.ilham.doctorbookingsystem.model.request.RegisterPatientRequest;
@@ -61,7 +64,7 @@ public class AuthenticationService {
     public String registerPatient(RegisterPatientRequest request){
         log.info("ActionLog.registerPatient.start");
         if (userRepository.findByEmail(request.getEmail()).isPresent()){
-            throw new RuntimeException();
+            throw new CustomException(ErrorMessage.EMAIL_ALREADY_EXISTS);
         }
 
         UserEntity userEntity = UserEntity.builder()
@@ -153,7 +156,7 @@ public class AuthenticationService {
         }
 
         UserEntity userEntity = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         userEntity.setEnabled(true);
         userRepository.save(userEntity);
@@ -180,10 +183,10 @@ public class AuthenticationService {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         UserEntity user = userRepository.findByEmail(request.getEmail()).
-                orElseThrow(() -> new RuntimeException("User not found"));
+                orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         if (!user.isEnabled()) {
-            throw new RuntimeException("User not verified. Please verify OTP first.");
+            throw new CustomException(ErrorMessage.USER_NOT_VERIFIED);
         }
 
         refreshTokenRepository.deleteByUser(user);
@@ -192,8 +195,7 @@ public class AuthenticationService {
 
         RefreshTokenEntity refreshToken = createRefreshToken(user);
 
-        String roleName =
-                user.getRole().name().toLowerCase();
+        String roleName = user.getRole().name().toLowerCase();
 
         String message =
                 roleName.substring(0,1).toUpperCase()
@@ -214,20 +216,18 @@ public class AuthenticationService {
 
         log.info("ActionLog.refreshToken.start");
 
-        RefreshTokenEntity refreshToken = refreshTokenRepository
-                .findByToken(requestToken)
-                .orElseThrow(() ->
-                        new RuntimeException("Refresh token not found"));
+        RefreshTokenEntity refreshToken = refreshTokenRepository.findByToken(requestToken)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.REFRESH_TOKEN_NOT_FOUND));
 
         if (refreshToken.getExpiryDate().isBefore(Instant.now())) {
             refreshTokenRepository.delete(refreshToken);
-            throw new RuntimeException("Refresh token expired");
+            throw new CustomException(ErrorMessage.REFRESH_TOKEN_EXPIRED);
         }
 
         UserEntity user = refreshToken.getUser();
 
         if (!user.isEnabled()) {
-            throw new RuntimeException("User is not active");
+            throw new CustomException(ErrorMessage.USER_NOT_ACTIVE);
         }
 
         String newAccessToken = jwtService.generateToken(user);
@@ -262,7 +262,7 @@ public class AuthenticationService {
         log.info("ActionLog.logout.start");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Invalid authorization header");
+            throw new CustomException(ErrorMessage.INVALID_HEADER);
         }
 
         String token = authHeader.substring(7);
@@ -275,7 +275,7 @@ public class AuthenticationService {
 
         UserEntity user = userRepository
                 .findByEmail(jwtService.extractUsernameByToken(token))
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         refreshTokenRepository.findByUser(user)
                 .ifPresent(refreshTokenRepository::delete);

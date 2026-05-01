@@ -4,6 +4,8 @@ import com.ilham.doctorbookingsystem.entity.AppointmentEntity;
 import com.ilham.doctorbookingsystem.entity.DoctorEntity;
 import com.ilham.doctorbookingsystem.enums.AppointmentStatus;
 import com.ilham.doctorbookingsystem.enums.ApprovalStatus;
+import com.ilham.doctorbookingsystem.enums.ErrorMessage;
+import com.ilham.doctorbookingsystem.exception.CustomException;
 import com.ilham.doctorbookingsystem.mapper.DoctorMapper;
 import com.ilham.doctorbookingsystem.model.response.DoctorResponseDto;
 import com.ilham.doctorbookingsystem.repository.AppointmentRepository;
@@ -72,7 +74,7 @@ public class PatientService {
         LocalDate maxDate = today.plusDays(30);
 
         if (date.isBefore(today) || date.isAfter(maxDate)) {
-            throw new RuntimeException("Date must be within next 30 days");
+            throw new CustomException(ErrorMessage.APPOINTMENT_DATE_EXCEPTION);
         }
 
         List<AppointmentEntity> appointmentEntities =

@@ -6,6 +6,9 @@ import com.ilham.doctorbookingsystem.entity.PatientEntity;
 import com.ilham.doctorbookingsystem.entity.UserEntity;
 import com.ilham.doctorbookingsystem.enums.AppointmentStatus;
 import com.ilham.doctorbookingsystem.enums.ApprovalStatus;
+import com.ilham.doctorbookingsystem.enums.ErrorMessage;
+import com.ilham.doctorbookingsystem.exception.CustomException;
+import com.ilham.doctorbookingsystem.exception.ResourceNotFoundException;
 import com.ilham.doctorbookingsystem.mapper.AppointmentMapper;
 import com.ilham.doctorbookingsystem.model.request.BookAppointmentRequestDto;
 import com.ilham.doctorbookingsystem.model.response.AppointmentResponseDto;
@@ -54,20 +57,20 @@ public class AppointmentService {
         LocalDate maxDate = today.plusDays(30);
 
         if (request.getAppointmentDate().isBefore(today) || request.getAppointmentDate().isAfter(maxDate)) {
-            throw new RuntimeException("Date must be within next 30 days");
+            throw new CustomException(ErrorMessage.APPOINTMENT_DATE_EXCEPTION);
         }
 
         UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(httpRequest))
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         PatientEntity patientEntity = patientRepository.findByUserId(userEntity.getId())
-                .orElseThrow(() -> new RuntimeException("Patient Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.PATIENT_NOT_FOUND));
 
         DoctorEntity doctorEntity = doctorRepository.findById(request.getDoctorId()).
-                orElseThrow(() -> new RuntimeException("Doctor Not Found"));
+                orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.DOCTOR_NOT_FOUND));
 
         if (doctorEntity.getStatus() != ApprovalStatus.APPROVED){
-            throw new RuntimeException("Doctor Not Approved");
+            throw new CustomException(ErrorMessage.DOCTOR_NOT_APPROVED);
         }
 
         boolean isBooked = appointmentRepository.existsByDoctorIdAndAppointmentDateAndAppointmentTime(
@@ -76,7 +79,7 @@ public class AppointmentService {
                 request.getAppointmentTime()
         );
         if (isBooked){
-            throw new RuntimeException("This slot is already booked");
+            throw new CustomException(ErrorMessage.SLOT_ALREADY_BOOKED);
         }
 
         AppointmentEntity appointmentEntity = AppointmentEntity.builder()
@@ -107,10 +110,10 @@ public class AppointmentService {
     public Page<AppointmentResponseDto> getMyAppointments(HttpServletRequest httpRequest, Pageable pageable){
         log.info("actionLog.getMyAppointments.start");
         UserEntity user = userRepository.findById(jwtService.extractUserIdFromAccessToken(httpRequest))
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         PatientEntity patientEntity = patientRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Patient Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.PATIENT_NOT_FOUND));
 
         Page<AppointmentEntity> appointmentEntities = appointmentRepository.findByPatientId(patientEntity.getId(), pageable);
 
@@ -123,25 +126,26 @@ public class AppointmentService {
     public AppointmentResponseDto cancelAppointment(Long id, HttpServletRequest httpRequest){
         log.info("actionLog.cancelAppointment.start");
         UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(httpRequest))
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         PatientEntity patientEntity = patientRepository.findByUserId(userEntity.getId())
-                .orElseThrow(() -> new RuntimeException("Patient Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.PATIENT_NOT_FOUND));
 
         AppointmentEntity appointmentEntity = appointmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Appointment Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.APPOINTMENT_NOT_FOUND));
 
         if (!Objects.equals(appointmentEntity.getPatient().getId(), patientEntity.getId())){
-            throw new RuntimeException("You cannot cancel this appointment");
+            throw new CustomException(ErrorMessage.CANNOT_CANCEL_APPOINTMENT);
         }
 
         if (appointmentEntity.getStatus() == AppointmentStatus.CANCELLED || appointmentEntity.getStatus() == AppointmentStatus.COMPLETED){
-            throw new RuntimeException("This slot is already cancelled");
+            throw new CustomException(ErrorMessage.SLOT_ALREADY_CANCELED);
         }
 
         appointmentEntity.setStatus(AppointmentStatus.CANCELLED);
         appointmentEntity.setUpdatedAt(LocalDateTime.now());
         appointmentRepository.save(appointmentEntity);
+
         log.info("actionLog.cancelAppointment.end");
         return appointmentMapper.entityToDto(appointmentEntity);
     }

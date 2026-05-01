@@ -2,6 +2,9 @@ package com.ilham.doctorbookingsystem.service;
 
 import com.ilham.doctorbookingsystem.entity.*;
 import com.ilham.doctorbookingsystem.enums.AppointmentStatus;
+import com.ilham.doctorbookingsystem.enums.ErrorMessage;
+import com.ilham.doctorbookingsystem.exception.CustomException;
+import com.ilham.doctorbookingsystem.exception.ResourceNotFoundException;
 import com.ilham.doctorbookingsystem.mapper.ReviewMapper;
 import com.ilham.doctorbookingsystem.model.request.CreateReviewRequestDto;
 import com.ilham.doctorbookingsystem.model.response.AverageReviewResponseDto;
@@ -16,10 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -44,24 +44,24 @@ public class ReviewService {
         log.info("ActionLog.createReview.start");
 
         UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(httpRequest))
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         PatientEntity patientEntity = patientRepository.findByUserId(userEntity.getId())
-                .orElseThrow(() -> new RuntimeException("Patient Not Found"));
+                .orElseThrow(() -> new CustomException(ErrorMessage.PATIENT_NOT_FOUND));
 
         AppointmentEntity appointmentEntity = appointmentRepository.findById(request.getAppointmentId())
-                .orElseThrow(() -> new RuntimeException("Appointment Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.APPOINTMENT_NOT_FOUND));
 
         DoctorEntity doctorEntity = appointmentEntity.getDoctor();
 
         if (!Objects.equals(appointmentEntity.getPatient().getId(), patientEntity.getId())){
-            throw new RuntimeException("You cannot review this appointment");
+            throw new CustomException(ErrorMessage.YOU_CANNOT_REVIEW_THIS_APPOINTMENT);
         }
         if (appointmentEntity.getStatus() != AppointmentStatus.COMPLETED){
-            throw new RuntimeException("Only completed appointments can be reviewed");
+            throw new CustomException(ErrorMessage.ONLY_COMPLETED_APPOINTMENTS_CAN_BE_REVIEW);
         }
         if (reviewRepository.existsByAppointmentId(request.getAppointmentId())){
-            throw new RuntimeException("Review already exists for this appointment");
+            throw new CustomException(ErrorMessage.REVIEW_ALREADY_EXISTS);
         }
 
         ReviewEntity reviewEntity = ReviewEntity.builder()
@@ -84,10 +84,10 @@ public class ReviewService {
         log.info("ActionLog.getAllReviews.start");
 
         UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(httpRequest))
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         DoctorEntity doctorEntity = doctorRepository.findByUserId(userEntity.getId())
-                .orElseThrow(() -> new RuntimeException("Doctor Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.DOCTOR_NOT_FOUND));
 
         Page<ReviewEntity> reviewEntities = reviewRepository.findByDoctorId(doctorEntity.getId(), pageable);
 
@@ -100,7 +100,7 @@ public class ReviewService {
         log.info("ActionLog.averageReview.start");
 
         doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new RuntimeException("Doctor Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.DOCTOR_NOT_FOUND));
 
         long totalReviews = reviewRepository.countByDoctorId(doctorId);
         Double averageRating = reviewRepository.findAverageRatingByDoctorId(doctorId);
@@ -122,7 +122,7 @@ public class ReviewService {
     public DoctorDetailResponseDto getDoctorDetail(Long doctorId){
         log.info("ActionLog.getDoctorDetail.start");
         DoctorEntity doctorEntity = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new RuntimeException("Doctor Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.DOCTOR_NOT_FOUND));
 
         AverageReviewResponseDto ratingInfo = getDoctorAverageRating(doctorId);
 

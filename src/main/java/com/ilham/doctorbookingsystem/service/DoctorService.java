@@ -5,13 +5,15 @@ import com.ilham.doctorbookingsystem.entity.DoctorEntity;
 import com.ilham.doctorbookingsystem.entity.UserEntity;
 import com.ilham.doctorbookingsystem.enums.AppointmentStatus;
 import com.ilham.doctorbookingsystem.enums.ApprovalStatus;
+import com.ilham.doctorbookingsystem.enums.ErrorMessage;
+import com.ilham.doctorbookingsystem.exception.CustomException;
+import com.ilham.doctorbookingsystem.exception.ResourceNotFoundException;
 import com.ilham.doctorbookingsystem.mapper.AppointmentMapper;
 import com.ilham.doctorbookingsystem.mapper.DoctorMapper;
 import com.ilham.doctorbookingsystem.model.response.AppointmentForDoctorResponseDto;
 import com.ilham.doctorbookingsystem.model.response.DoctorResponseDto;
 import com.ilham.doctorbookingsystem.repository.AppointmentRepository;
 import com.ilham.doctorbookingsystem.repository.DoctorRepository;
-import com.ilham.doctorbookingsystem.repository.PatientRepository;
 import com.ilham.doctorbookingsystem.repository.UserRepository;
 import com.ilham.doctorbookingsystem.service.auth.JwtService;
 import com.ilham.doctorbookingsystem.service.mail.EmailService;
@@ -24,8 +26,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +48,7 @@ public class DoctorService {
 
     private DoctorEntity getDoctorById(Long id) {
         return doctorRepository.findById(id).
-                orElseThrow(() -> new RuntimeException("Doctor not found"));
+                orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.DOCTOR_NOT_FOUND));
     }
 
     @Transactional
@@ -57,7 +57,7 @@ public class DoctorService {
         DoctorEntity doctor = getDoctorById(id);
 
         if (doctor.getStatus() == ApprovalStatus.APPROVED) {
-            throw new RuntimeException("Doctor is already approved");
+            throw new CustomException(ErrorMessage.DOCTOR_ALREADY_APPROVED);
         }
 
             doctor.setStatus(ApprovalStatus.APPROVED);
@@ -86,7 +86,7 @@ public class DoctorService {
         log.info("ActionLog.rejectDoctor.start");
         DoctorEntity doctor = getDoctorById(id);
         if (doctor.getStatus() == ApprovalStatus.REJECTED) {
-            throw new RuntimeException("Doctor is already rejected");
+            throw new CustomException(ErrorMessage.DOCTOR_ALREADY_REJECTED);
         }
         doctor.setStatus(ApprovalStatus.REJECTED);
         doctorRepository.save(doctor);
@@ -97,11 +97,11 @@ public class DoctorService {
     public Page<AppointmentForDoctorResponseDto> getAllMyAppointments(HttpServletRequest request, Pageable pageable) {
         log.info("ActionLog.getAllMyAppointments.start");
         UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(request))
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
 
         DoctorEntity doctorEntity = doctorRepository.findByUserId(userEntity.getId())
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.DOCTOR_NOT_FOUND));
 
         Page<AppointmentEntity> appointmentEntities = appointmentRepository.findByDoctorId(doctorEntity.getId(), pageable);
 
@@ -114,13 +114,13 @@ public class DoctorService {
     public AppointmentForDoctorResponseDto confirmAppointmentByDoctor(Long id, HttpServletRequest request) {
         log.info("ActionLog.confirmAppointmentByDoctor.start");
         UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(request))
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         DoctorEntity doctorEntity = doctorRepository.findByUserId(userEntity.getId())
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.DOCTOR_NOT_FOUND));
 
         AppointmentEntity appointmentEntity = appointmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.APPOINTMENT_NOT_FOUND));
 
         if (!appointmentEntity.getDoctor().getId().equals(doctorEntity.getId())) {
             throw new RuntimeException("You cannot confirm this appointment");
@@ -130,7 +130,7 @@ public class DoctorService {
             appointmentEntity.setStatus(AppointmentStatus.CONFIRMED);
             appointmentEntity.setUpdatedAt(LocalDateTime.now());
         }else{
-            throw new RuntimeException("You cannot confirm this appointment");
+            throw new CustomException(ErrorMessage.YOU_CANNOT_CONFIRM_APPOINTMENT);
         }
         appointmentRepository.save(appointmentEntity);
 
@@ -150,23 +150,23 @@ public class DoctorService {
     public AppointmentForDoctorResponseDto cancelAppointmentByDoctor(Long id, HttpServletRequest request) {
         log.info("ActionLog.cancelAppointmentByDoctor.start");
         UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(request))
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         DoctorEntity doctorEntity = doctorRepository.findByUserId(userEntity.getId())
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.DOCTOR_NOT_FOUND));
 
         AppointmentEntity appointmentEntity = appointmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.APPOINTMENT_NOT_FOUND));
 
         if (!appointmentEntity.getDoctor().getId().equals(doctorEntity.getId())) {
-            throw new RuntimeException("You cannot cancel this appointment");
+            throw new CustomException(ErrorMessage.CANNOT_CANCEL_APPOINTMENT);
         }
 
         if (appointmentEntity.getStatus() == AppointmentStatus.PENDING || appointmentEntity.getStatus() == AppointmentStatus.CONFIRMED){
             appointmentEntity.setStatus(AppointmentStatus.CANCELLED);
             appointmentEntity.setUpdatedAt(LocalDateTime.now());
         }else{
-            throw new RuntimeException("Only pending or confirmed appointments can be cancelled");
+            throw new CustomException(ErrorMessage.PENDING_OR_CONFIRM_APPOINTMENT_CAN_BE_CANCELED);
         }
         appointmentRepository.save(appointmentEntity);
 
@@ -186,23 +186,23 @@ public class DoctorService {
     public AppointmentForDoctorResponseDto completeAppointmentByDoctor(Long id, HttpServletRequest request) {
         log.info("ActionLog.completeAppointmentByDoctor.start");
         UserEntity userEntity = userRepository.findById(jwtService.extractUserIdFromAccessToken(request))
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         DoctorEntity doctorEntity = doctorRepository.findByUserId(userEntity.getId())
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+                .orElseThrow(() -> new CustomException(ErrorMessage.DOCTOR_NOT_FOUND));
 
         AppointmentEntity appointmentEntity = appointmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.APPOINTMENT_NOT_FOUND));
 
         if (!appointmentEntity.getDoctor().getId().equals(doctorEntity.getId())) {
-            throw new RuntimeException("You cannot complete this appointment");
+            throw new CustomException(ErrorMessage.CANNOT_COMPLETE_APPOINTMENT);
         }
 
         if (appointmentEntity.getStatus() == AppointmentStatus.CONFIRMED){
             appointmentEntity.setStatus(AppointmentStatus.COMPLETED);
             appointmentEntity.setUpdatedAt(LocalDateTime.now());
         }else{
-            throw new RuntimeException("You can complete only confirmed appointments");
+            throw new CustomException(ErrorMessage.YOU_CAN_COMPLETE_ONLY_CONFIRMED_APPOINTMENTS);
         }
         appointmentRepository.save(appointmentEntity);
         log.info("ActionLog.completeAppointmentByDoctor.end");
