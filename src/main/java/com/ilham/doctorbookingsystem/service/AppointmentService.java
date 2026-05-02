@@ -12,6 +12,8 @@ import com.ilham.doctorbookingsystem.exception.ResourceNotFoundException;
 import com.ilham.doctorbookingsystem.mapper.AppointmentMapper;
 import com.ilham.doctorbookingsystem.model.request.BookAppointmentRequestDto;
 import com.ilham.doctorbookingsystem.model.response.AppointmentResponseDto;
+import com.ilham.doctorbookingsystem.rabbitmq.dto.AppointmentMessage;
+import com.ilham.doctorbookingsystem.rabbitmq.producer.RabbitMQProducer;
 import com.ilham.doctorbookingsystem.repository.AppointmentRepository;
 import com.ilham.doctorbookingsystem.repository.DoctorRepository;
 import com.ilham.doctorbookingsystem.repository.PatientRepository;
@@ -47,7 +49,7 @@ public class AppointmentService {
 
     private final AppointmentMapper appointmentMapper;
 
-    private final EmailService emailService;
+    private final RabbitMQProducer producer;
 
     @Transactional
     public AppointmentResponseDto bookAppointment(BookAppointmentRequestDto request, HttpServletRequest httpRequest){
@@ -95,12 +97,16 @@ public class AppointmentService {
 
         appointmentRepository.save(appointmentEntity);
 
-        emailService.sendAppointmentCreatedEmail(
+        AppointmentMessage message = new AppointmentMessage(
                 userEntity.getEmail(),
+                patientEntity.getUser().getFirstName(),
                 doctorEntity.getUser().getFirstName() + " " + doctorEntity.getUser().getLastName(),
-                appointmentEntity.getAppointmentDate(),
-                appointmentEntity.getAppointmentTime()
+                appointmentEntity.getAppointmentDate().toString(),
+                appointmentEntity.getAppointmentTime().toString(),
+                "CREATED"
         );
+
+        producer.sendAppointment(message);
 
         log.info("actionLog.bookAppointment.end");
         return appointmentMapper.entityToDto(appointmentEntity);

@@ -12,11 +12,12 @@ import com.ilham.doctorbookingsystem.mapper.AppointmentMapper;
 import com.ilham.doctorbookingsystem.mapper.DoctorMapper;
 import com.ilham.doctorbookingsystem.model.response.AppointmentForDoctorResponseDto;
 import com.ilham.doctorbookingsystem.model.response.DoctorResponseDto;
+import com.ilham.doctorbookingsystem.rabbitmq.dto.AppointmentMessage;
+import com.ilham.doctorbookingsystem.rabbitmq.producer.RabbitMQProducer;
 import com.ilham.doctorbookingsystem.repository.AppointmentRepository;
 import com.ilham.doctorbookingsystem.repository.DoctorRepository;
 import com.ilham.doctorbookingsystem.repository.UserRepository;
 import com.ilham.doctorbookingsystem.service.auth.JwtService;
-import com.ilham.doctorbookingsystem.service.mail.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,7 @@ public class DoctorService {
 
     private final AppointmentMapper appointmentMapper;
 
-    private final EmailService emailService;
+    private final RabbitMQProducer producer;
 
     private DoctorEntity getDoctorById(Long id) {
         return doctorRepository.findById(id).
@@ -134,12 +135,16 @@ public class DoctorService {
         }
         appointmentRepository.save(appointmentEntity);
 
-        emailService.sendAppointmentConfirmedEmail(
+        AppointmentMessage message = new AppointmentMessage(
                 appointmentEntity.getPatient().getUser().getEmail(),
+                appointmentEntity.getPatient().getUser().getFirstName(),
                 doctorEntity.getUser().getFirstName() + " " + doctorEntity.getUser().getLastName(),
-                appointmentEntity.getAppointmentDate(),
-                appointmentEntity.getAppointmentTime()
+                appointmentEntity.getAppointmentDate().toString(),
+                appointmentEntity.getAppointmentTime().toString(),
+                "CONFIRMED"
         );
+
+        producer.sendAppointment(message);
 
         log.info("ActionLog.confirmAppointmentByDoctor.end");
         return appointmentMapper.entityToForDto(appointmentEntity);
@@ -170,12 +175,16 @@ public class DoctorService {
         }
         appointmentRepository.save(appointmentEntity);
 
-        emailService.sendAppointmentCanceledEmail(
+        AppointmentMessage message = new AppointmentMessage(
                 appointmentEntity.getPatient().getUser().getEmail(),
+                appointmentEntity.getPatient().getUser().getFirstName(),
                 doctorEntity.getUser().getFirstName() + " " + doctorEntity.getUser().getLastName(),
-                appointmentEntity.getAppointmentDate(),
-                appointmentEntity.getAppointmentTime()
+                appointmentEntity.getAppointmentDate().toString(),
+                appointmentEntity.getAppointmentTime().toString(),
+                "CANCELLED"
         );
+
+        producer.sendAppointment(message);
 
         log.info("ActionLog.cancelAppointmentByDoctor.end");
         return appointmentMapper.entityToForDto(appointmentEntity);
